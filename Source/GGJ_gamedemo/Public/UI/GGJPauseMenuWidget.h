@@ -1,6 +1,6 @@
 #pragma once
 
-// 默认简约暂停菜单：返回游戏、设置、主菜单、退出，以及音量/分辨率/窗口模式。
+// 默认简约暂停菜单：返回游戏、设置、开发者关卡、主菜单、退出，以及显示和音量设置。
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
@@ -42,6 +42,8 @@ private:
     void HandleSettingsClicked();
     UFUNCTION()
     void HandleMainMenuClicked();
+    UFUNCTION()
+    void HandleDeveloperLevelClicked();
     UFUNCTION()
     void HandleQuitClicked();
     UFUNCTION()

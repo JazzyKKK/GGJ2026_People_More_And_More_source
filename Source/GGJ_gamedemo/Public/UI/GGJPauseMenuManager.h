@@ -44,6 +44,10 @@ public:
     UFUNCTION(BlueprintCallable, Category="Pause Menu")
     void ReturnToMainMenu();
 
+    /** 直接打开物理角色开发测试关卡。 */
+    UFUNCTION(BlueprintCallable, Category="Pause Menu")
+    void OpenDeveloperLevel();
+
     UFUNCTION(BlueprintCallable, Category="Pause Menu")
     void QuitGame();
 
@@ -70,7 +74,7 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Pause Menu|UI")
     int32 WidgetZOrder = 1000;
 
-    /** 设置后“退出到主菜单”会打开该关卡；留空时只广播事件，方便蓝图自行处理。 */
+    /** 旧版可配置入口，当前“退出到主菜单”已固定打开 /Game/GGJ/Level/start/Start。 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Pause Menu|Navigation")
     TSoftObjectPtr<UWorld> MainMenuLevel;
 

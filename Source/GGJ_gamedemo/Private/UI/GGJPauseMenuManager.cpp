@@ -17,6 +17,11 @@ namespace GGJPauseMenu
 {
     constexpr TCHAR SettingsSection[] = TEXT("/Script/GGJ_gamedemo.GGJPauseMenuSettings");
     constexpr TCHAR VolumeKey[] = TEXT("MasterVolume");
+    // ESC 菜单中的“退出到主菜单”固定返回这个开始关卡。
+    constexpr TCHAR StartLevelPackage[] = TEXT("/Game/GGJ/Level/start/Start");
+    // ESC 菜单中的“开发者关卡”固定进入物理角色测试关卡。
+    constexpr TCHAR DeveloperLevelPackage[] =
+        TEXT("/Game/GGJ/Character/Maps/L_PhysicalCharacterLab");
 }
 
 AGGJPauseMenuManager::AGGJPauseMenuManager()
@@ -163,21 +168,14 @@ void AGGJPauseMenuManager::ResumeGame()
 void AGGJPauseMenuManager::ReturnToMainMenu()
 {
     OnMainMenuRequested.Broadcast();
-    if (MainMenuLevel.IsNull())
-    {
-        UE_LOG(LogTemp, Warning,
-            TEXT("PauseMenuManager: MainMenuLevel is not set. Configure it on a placed BP manager, or handle OnMainMenuRequested in Blueprint."));
-        return;
-    }
-
-    const FString PackageName = MainMenuLevel.ToSoftObjectPath().GetLongPackageName();
-    if (PackageName.IsEmpty())
-    {
-        return;
-    }
-
     UGameplayStatics::SetGamePaused(this, false);
-    UGameplayStatics::OpenLevel(this, FName(*PackageName));
+    UGameplayStatics::OpenLevel(this, FName(GGJPauseMenu::StartLevelPackage));
+}
+
+void AGGJPauseMenuManager::OpenDeveloperLevel()
+{
+    UGameplayStatics::SetGamePaused(this, false);
+    UGameplayStatics::OpenLevel(this, FName(GGJPauseMenu::DeveloperLevelPackage));
 }
 
 void AGGJPauseMenuManager::QuitGame()

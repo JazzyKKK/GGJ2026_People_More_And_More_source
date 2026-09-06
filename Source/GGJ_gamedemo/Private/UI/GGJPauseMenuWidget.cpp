@@ -101,6 +101,8 @@ TSharedRef<SWidget> UGGJPauseMenuWidget::RebuildWidget()
         FText::FromString(TEXT("回到游戏")), TEXT("ResumeButton"));
     UButton* SettingsButton = MakeMenuButton(MainPanel,
         FText::FromString(TEXT("设置")), TEXT("SettingsButton"));
+    UButton* DeveloperLevelButton = MakeMenuButton(MainPanel,
+        FText::FromString(TEXT("开发者关卡")), TEXT("DeveloperLevelButton"));
     UButton* MainMenuButton = MakeMenuButton(MainPanel,
         FText::FromString(TEXT("退出到主菜单")), TEXT("MainMenuButton"));
     UButton* QuitButton = MakeMenuButton(MainPanel,
@@ -108,6 +110,8 @@ TSharedRef<SWidget> UGGJPauseMenuWidget::RebuildWidget()
 
     ResumeButton->OnClicked.AddDynamic(this, &UGGJPauseMenuWidget::HandleResumeClicked);
     SettingsButton->OnClicked.AddDynamic(this, &UGGJPauseMenuWidget::HandleSettingsClicked);
+    DeveloperLevelButton->OnClicked.AddDynamic(this,
+        &UGGJPauseMenuWidget::HandleDeveloperLevelClicked);
     MainMenuButton->OnClicked.AddDynamic(this, &UGGJPauseMenuWidget::HandleMainMenuClicked);
     QuitButton->OnClicked.AddDynamic(this, &UGGJPauseMenuWidget::HandleQuitClicked);
 
@@ -308,6 +312,11 @@ void UGGJPauseMenuWidget::HandleSettingsClicked()
 void UGGJPauseMenuWidget::HandleMainMenuClicked()
 {
     if (Manager) { Manager->ReturnToMainMenu(); }
+}
+
+void UGGJPauseMenuWidget::HandleDeveloperLevelClicked()
+{
+    if (Manager) { Manager->OpenDeveloperLevel(); }
 }
 
 void UGGJPauseMenuWidget::HandleQuitClicked()
