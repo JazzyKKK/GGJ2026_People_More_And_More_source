@@ -1,0 +1,72 @@
+# Unreal Engine generated output. These folders are recreated by UE/UBT.
+/Binaries/
+/DerivedDataCache/
+/Intermediate/
+/Saved/
+
+# Local editor and IDE state.
+/.vs/
+/.idea/
+/.vscode/
+*.sln
+*.suo
+*.opensdf
+*.sdf
+*.VC.db
+*.VC.opendb
+*.code-workspace
+
+# Local backups and autosave exports.
+/Backups/
+*~
+*.tmp
+*.temp
+
+# Generated cook ordering logs. Keep any other intentional Build resources.
+/Build/*/FileOpenOrder/
+
+# Generated output inside project plugins. Plugin source/content and content stay tracked.
+/Plugins/*/Binaries/
+/Plugins/*/Intermediate/
+/Plugins/*/DerivedDataCache/
+/Plugins/*/Saved/
+
+# Compiler/linker products that may appear outside the standard folders.
+*.obj
+*.o
+*.lo
+*.dll
+*.dylib
+*.so
+*.exe
+*.pdb
+*.ilk
+*.exp
+*.lib
+*.a
+*.app
+*.ipa
+*.apk
+*.aab
+*.pak
+*.ucas
+*.utoc
+*.modules
+*.target
+
+# Crash dumps, logs and profiling captures.
+*.log
+*.dmp
+*.mdmp
+*.core
+*.trace
+*.utrace
+
+# Operating-system metadata.
+.DS_Store
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Important: Unreal project assets are intentionally NOT ignored.
+# Content/**/*.uasset and Content/**/*.umap must be committed.
