@@ -110,6 +110,26 @@ public:
     UFUNCTION(BlueprintPure, Category="Physical Character|Components")
     UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
+    /**
+     * 控制本角色是否写入 Custom Depth / Stencil。
+     * 群体相机中的遮挡轮廓后处理会读取它；关闭后该角色不再显示遮挡轮廓。
+     */
+    UFUNCTION(BlueprintCallable, Category="Physical Character|Occlusion Outline")
+    void SetOcclusionOutlineEnabled(bool bEnabled);
+
+    /**
+     * 修改角色写入的 Stencil 编号，范围为 1~255。
+     * 后处理材质默认识别编号 1；可用不同编号为特殊角色制作不同颜色。
+     */
+    UFUNCTION(BlueprintCallable, Category="Physical Character|Occlusion Outline")
+    void SetOcclusionOutlineStencilValue(int32 NewStencilValue);
+
+    UFUNCTION(BlueprintPure, Category="Physical Character|Occlusion Outline")
+    bool IsOcclusionOutlineEnabled() const { return bOcclusionOutlineEnabled; }
+
+    UFUNCTION(BlueprintPure, Category="Physical Character|Occlusion Outline")
+    int32 GetOcclusionOutlineStencilValue() const { return OcclusionOutlineStencilValue; }
+
     /** 把动画姿势转换成物理马达参数；默认值精确复刻 Test_Lab2 的 phyAni 节点。 */
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Physical Character|Physics")
     FPhysicalAnimationData DriveSettings;
@@ -136,6 +156,17 @@ public:
      */
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Physical Character|Physics", meta=(ClampMin="0.0"))
     float PhysicalAnimationInitializationDelay = 0.05f;
+
+    /** 所有群体成员默认参与相机的“被建筑遮挡时显示轮廓”效果。 */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite,
+        Category="Physical Character|Occlusion Outline")
+    bool bOcclusionOutlineEnabled = true;
+
+    /** 与后处理材质约定的角色类型编号；普通小人统一使用 1。 */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite,
+        Category="Physical Character|Occlusion Outline",
+        meta=(ClampMin="1", ClampMax="255", UIMin="1", UIMax="255"))
+    int32 OcclusionOutlineStencilValue = 1;
 
     /** 原地或 Happy Idle 动画；不配置时保持参考姿势。 */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Physical Character|Animation")
@@ -190,6 +221,7 @@ protected:
     bool IsPhysicalBodyStateReady() const;
     bool IsAnimationCompatible(const UAnimationAsset* Animation) const;
     void PlayLocomotionAnimation(EGGJLocomotionState NewState, UAnimationAsset* Animation);
+    void ApplyOcclusionOutlineSettings();
 
     /** 官方第三人称 Camera Boom：处理镜头距离和场景遮挡。 */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Physical Character|Components", meta=(AllowPrivateAccess="true"))

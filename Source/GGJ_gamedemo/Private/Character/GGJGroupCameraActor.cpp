@@ -5,6 +5,16 @@
 #include "Character/GGJCharacterGroupManager.h"
 #include "Character/GGJPhysicalAnimationCharacter.h"
 #include "GameFramework/PlayerController.h"
+#include "Materials/MaterialInstanceDynamic.h"
+#include "Materials/MaterialInterface.h"
+
+namespace GGJOcclusionOutline
+{
+    const FName ColorParameter(TEXT("OutlineColor"));
+    const FName WidthParameter(TEXT("OutlineWidth"));
+    const FName IntensityParameter(TEXT("OutlineIntensity"));
+    const FName DepthBiasParameter(TEXT("DepthBias"));
+}
 
 AGGJGroupCameraActor::AGGJGroupCameraActor()
 {
@@ -19,6 +29,8 @@ AGGJGroupCameraActor::AGGJGroupCameraActor()
     Camera->AspectRatio = 16.f / 9.f;
     Camera->PostProcessSettings.bOverride_MotionBlurAmount = true;
     Camera->PostProcessSettings.MotionBlurAmount = 0.f;
+    // 后处理材质直接挂在相机上，因此每张关卡无需重复放置无限范围 PostProcessVolume。
+    Camera->PostProcessBlendWeight = 1.f;
 }
 
 void AGGJGroupCameraActor::BeginPlay()
@@ -26,7 +38,91 @@ void AGGJGroupCameraActor::BeginPlay()
     Super::BeginPlay();
     CurrentYaw = StartYaw = TargetYaw = FMath::UnwindDegrees(InitialYaw);
     CurrentDistance = FMath::Clamp(MinDistance, 200.f, FMath::Max(MinDistance, MaxDistance));
+    RefreshOcclusionOutlinePostProcess();
     ApplyCameraPose();
+}
+
+void AGGJGroupCameraActor::SetOcclusionOutlineEnabled(const bool bEnabled)
+{
+    bOcclusionOutlineEnabled = bEnabled;
+    RefreshOcclusionOutlinePostProcess();
+}
+
+void AGGJGroupCameraActor::SetOcclusionOutlineMaterial(UMaterialInterface* NewMaterial)
+{
+    OcclusionOutlineMaterial = NewMaterial;
+    RefreshOcclusionOutlinePostProcess();
+}
+
+void AGGJGroupCameraActor::SetOcclusionOutlineBlendWeight(const float NewWeight)
+{
+    OcclusionOutlineBlendWeight = FMath::Clamp(NewWeight, 0.f, 1.f);
+    RefreshOcclusionOutlinePostProcess();
+}
+
+void AGGJGroupCameraActor::SetOcclusionOutlineStyle(const FLinearColor NewColor,
+    const float NewWidth, const float NewIntensity, const float NewDepthBias)
+{
+    OcclusionOutlineColor = NewColor;
+    OcclusionOutlineWidth = FMath::Clamp(NewWidth, 0.f, 12.f);
+    OcclusionOutlineIntensity = FMath::Clamp(NewIntensity, 0.f, 50.f);
+    OcclusionOutlineDepthBias = FMath::Clamp(NewDepthBias, 0.f, 100.f);
+    ApplyOcclusionOutlineMaterialParameters();
+}
+
+void AGGJGroupCameraActor::RefreshOcclusionOutlinePostProcess()
+{
+    if (!Camera)
+    {
+        return;
+    }
+
+    // 只删除上次由本类插入的条目，保留景深、调色等其他相机 Blendable。
+    if (AppliedOcclusionOutlineBlendable)
+    {
+        Camera->PostProcessSettings.WeightedBlendables.Array.RemoveAll(
+            [this](const FWeightedBlendable& Blendable)
+            {
+                return Blendable.Object == AppliedOcclusionOutlineBlendable;
+            });
+    }
+    AppliedOcclusionOutlineBlendable = nullptr;
+    OcclusionOutlineMID = nullptr;
+
+    if (!bOcclusionOutlineEnabled || !OcclusionOutlineMaterial
+        || OcclusionOutlineBlendWeight <= 0.f)
+    {
+        return;
+    }
+
+    OcclusionOutlineMID = UMaterialInstanceDynamic::Create(OcclusionOutlineMaterial, this);
+    if (!OcclusionOutlineMID)
+    {
+        return;
+    }
+
+    ApplyOcclusionOutlineMaterialParameters();
+    Camera->PostProcessSettings.WeightedBlendables.Array.Add(
+        FWeightedBlendable(FMath::Clamp(OcclusionOutlineBlendWeight, 0.f, 1.f),
+            OcclusionOutlineMID));
+    AppliedOcclusionOutlineBlendable = OcclusionOutlineMID;
+}
+
+void AGGJGroupCameraActor::ApplyOcclusionOutlineMaterialParameters()
+{
+    if (!OcclusionOutlineMID)
+    {
+        return;
+    }
+
+    OcclusionOutlineMID->SetVectorParameterValue(
+        GGJOcclusionOutline::ColorParameter, OcclusionOutlineColor);
+    OcclusionOutlineMID->SetScalarParameterValue(
+        GGJOcclusionOutline::WidthParameter, OcclusionOutlineWidth);
+    OcclusionOutlineMID->SetScalarParameterValue(
+        GGJOcclusionOutline::IntensityParameter, OcclusionOutlineIntensity);
+    OcclusionOutlineMID->SetScalarParameterValue(
+        GGJOcclusionOutline::DepthBiasParameter, OcclusionOutlineDepthBias);
 }
 
 void AGGJGroupCameraActor::ActivateForPlayer(APlayerController* PlayerController,

@@ -12,6 +12,8 @@ class APlayerController;
 class AGGJCharacterGroupManager;
 class AGGJPhysicalAnimationCharacter;
 class UCameraComponent;
+class UMaterialInterface;
+class UMaterialInstanceDynamic;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FGGJGroupCameraRotationEvent);
 
@@ -51,8 +53,71 @@ public:
     UFUNCTION(BlueprintPure, Category="Group Camera")
     FVector GetCurrentFocus() const { return CurrentFocus; }
 
+    /** 运行时启用或关闭人物被建筑遮挡时的轮廓后处理。 */
+    UFUNCTION(BlueprintCallable, Category="Group Camera|Occlusion Outline")
+    void SetOcclusionOutlineEnabled(bool bEnabled);
+
+    /**
+     * 运行时替换后处理材质。材质必须使用 Post Process Domain，并读取 CustomDepth/Stencil。
+     * 传入空值会安全移除当前轮廓效果。
+     */
+    UFUNCTION(BlueprintCallable, Category="Group Camera|Occlusion Outline")
+    void SetOcclusionOutlineMaterial(UMaterialInterface* NewMaterial);
+
+    /** 0 完全不显示，1 使用材质完整输出；适合做淡入淡出。 */
+    UFUNCTION(BlueprintCallable, Category="Group Camera|Occlusion Outline")
+    void SetOcclusionOutlineBlendWeight(float NewWeight);
+
+    /**
+     * 一次更新常用视觉参数。后处理材质参数名必须分别为：
+     * OutlineColor、OutlineWidth、OutlineIntensity、DepthBias。
+     */
+    UFUNCTION(BlueprintCallable, Category="Group Camera|Occlusion Outline")
+    void SetOcclusionOutlineStyle(FLinearColor NewColor, float NewWidth,
+        float NewIntensity, float NewDepthBias);
+
+    /** 蓝图需要单独修改材质参数时，可获取相机创建的运行时材质实例。 */
+    UFUNCTION(BlueprintPure, Category="Group Camera|Occlusion Outline")
+    UMaterialInstanceDynamic* GetOcclusionOutlineDynamicMaterial() const
+    {
+        return OcclusionOutlineMID;
+    }
+
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Group Camera|Components")
     TObjectPtr<UCameraComponent> Camera;
+
+    /**
+     * 人物遮挡轮廓的 Post Process 材质。留空时相机正常工作，只是不绘制轮廓。
+     * 材质会由相机自动加入 Weighted Blendables，关卡无需放 PostProcessVolume。
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Group Camera|Occlusion Outline")
+    TObjectPtr<UMaterialInterface> OcclusionOutlineMaterial;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Group Camera|Occlusion Outline")
+    bool bOcclusionOutlineEnabled = true;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Group Camera|Occlusion Outline",
+        meta=(ClampMin="0.0", ClampMax="1.0"))
+    float OcclusionOutlineBlendWeight = 1.f;
+
+    /** 传给材质参数 OutlineColor。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Group Camera|Occlusion Outline")
+    FLinearColor OcclusionOutlineColor = FLinearColor(0.35f, 0.85f, 1.f, 1.f);
+
+    /** 传给材质参数 OutlineWidth，建议材质按屏幕像素解释。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Group Camera|Occlusion Outline",
+        meta=(ClampMin="0.0", ClampMax="12.0"))
+    float OcclusionOutlineWidth = 3.f;
+
+    /** 传给材质参数 OutlineIntensity，用于控制自发光亮度。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Group Camera|Occlusion Outline",
+        meta=(ClampMin="0.0", ClampMax="50.0"))
+    float OcclusionOutlineIntensity = 5.f;
+
+    /** 传给材质参数 DepthBias，用于避免人物贴近墙面时产生深度闪烁。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Group Camera|Occlusion Outline",
+        meta=(ClampMin="0.0", ClampMax="100.0"))
+    float OcclusionOutlineDepthBias = 10.f;
 
     /** 固定斜俯视角。负值表示从上方看向地面。 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Group Camera|View",
@@ -121,10 +186,21 @@ public:
 protected:
     virtual void BeginPlay() override;
 
+    /** 固定相机不调用基类 BeginPlay，因此该函数也向子类开放。 */
+    void RefreshOcclusionOutlinePostProcess();
+
 private:
     bool CalculateDesiredFrame(FVector& OutFocus, float& OutDistance) const;
     void ApplyCameraPose();
     void AdvanceRotation(float DeltaSeconds);
+    void ApplyOcclusionOutlineMaterialParameters();
+
+    UPROPERTY(Transient)
+    TObjectPtr<UMaterialInstanceDynamic> OcclusionOutlineMID;
+
+    /** 记住由本类加入的 Blendable，刷新时只移除自己，不影响相机上的其他后处理。 */
+    UPROPERTY(Transient)
+    TObjectPtr<UObject> AppliedOcclusionOutlineBlendable;
 
     UPROPERTY(Transient)
     TWeakObjectPtr<AGGJCharacterGroupManager> GroupManager;

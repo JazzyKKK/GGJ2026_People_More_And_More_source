@@ -53,6 +53,8 @@ AGGJPhysicalAnimationCharacter::AGGJPhysicalAnimationCharacter()
     GetMesh()->SetCollisionProfileName(TEXT("Pawn"));
     GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
     GetMesh()->SetGenerateOverlapEvents(false);
+    // 只负责把人物轮廓信息写入缓冲区；最终颜色由群体相机的后处理材质决定。
+    ApplyOcclusionOutlineSettings();
 
     CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
     CameraBoom->SetupAttachment(RootComponent);
@@ -80,6 +82,8 @@ AGGJPhysicalAnimationCharacter::AGGJPhysicalAnimationCharacter()
 void AGGJPhysicalAnimationCharacter::BeginPlay()
 {
     Super::BeginPlay();
+    // 蓝图子类可能覆盖默认开关或 Stencil 编号，因此 BeginPlay 再应用一次最终配置。
+    ApplyOcclusionOutlineSettings();
     EnsureInputAssets();
     AddInputMapping();
 
@@ -93,6 +97,29 @@ void AGGJPhysicalAnimationCharacter::BeginPlay()
         // 才拥有完整 Bodies。UE 5.6 的 PhysicalAnimation 内部会直接 Bodies[BodyIndex]，
         // 因此动态生成多人时必须等组件真正准备好。
         SchedulePhysicalAnimationInitialization();
+    }
+}
+
+void AGGJPhysicalAnimationCharacter::SetOcclusionOutlineEnabled(const bool bEnabled)
+{
+    bOcclusionOutlineEnabled = bEnabled;
+    ApplyOcclusionOutlineSettings();
+}
+
+void AGGJPhysicalAnimationCharacter::SetOcclusionOutlineStencilValue(
+    const int32 NewStencilValue)
+{
+    OcclusionOutlineStencilValue = FMath::Clamp(NewStencilValue, 1, 255);
+    ApplyOcclusionOutlineSettings();
+}
+
+void AGGJPhysicalAnimationCharacter::ApplyOcclusionOutlineSettings()
+{
+    if (USkeletalMeshComponent* MeshComponent = GetMesh())
+    {
+        MeshComponent->SetRenderCustomDepth(bOcclusionOutlineEnabled);
+        MeshComponent->SetCustomDepthStencilValue(
+            FMath::Clamp(OcclusionOutlineStencilValue, 1, 255));
     }
 }
 
