@@ -19,6 +19,8 @@ void AGGJFixedGroupCameraActor::BeginPlay()
 {
     // 不调用 AGGJGroupCameraActor::BeginPlay，避免它按焦点、距离和俯角重写摆放结果。
     AActor::BeginPlay();
+    // 虽然固定相机跳过基类视角初始化，仍需继承同一套遮挡轮廓后处理功能。
+    RefreshOcclusionOutlinePostProcess();
     SetActorTickEnabled(false);
 }
 

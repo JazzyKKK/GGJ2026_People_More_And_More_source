@@ -1,14 +1,35 @@
-# Unreal Engine generated output. These folders are recreated by UE/UBT.
+# Paths removed by CleanProject.bat / CleanProject.ps1.
+# Keep this block synchronized with $relativeTargets in CleanProject.ps1.
 /Binaries/
-/DerivedDataCache/
 /Intermediate/
-/Saved/
+/DerivedDataCache/
+/.vs/
+/GGJ_gamedemo.sln
+/Saved/Automation/
+/Saved/Cooked/
+/Saved/Crashes/
+/Saved/Interchange/
+/Saved/Logs/
+/Saved/MaterialStats/
+/Saved/ShaderDebugInfo/
+/Saved/Shaders/
+/Saved/StagedBuilds/
+/Saved/Temp/
+/Saved/UnrealBuildTool/
+/Saved/webcache_4430/
+
+# Local data preserved by the cleaner, but never committed.
+/Saved/Autosaves/
+/Saved/Collections/
+/Saved/Config/
+/Saved/Screenshots/
+/Saved/SourceControl/
+/Saved/SaveGames/
+/Saved/AutoScreenshot.png
 
 # Local editor and IDE state.
-/.vs/
 /.idea/
 /.vscode/
-*.sln
 *.suo
 *.opensdf
 *.sdf
