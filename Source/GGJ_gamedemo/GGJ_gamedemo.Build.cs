@@ -23,5 +23,7 @@ public class GGJ_gamedemo : ModuleRules
 
 		// UMG 的原生控件最终由 Slate 渲染，仅在实现文件中使用。
 		PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
+		// [PIXEL_WIND_VFX] 独立像素气流的自定义渲染组件。
+		PrivateDependencyModuleNames.AddRange(new string[] { "RenderCore", "RHI" });
 	}
 }
