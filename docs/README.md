@@ -163,6 +163,15 @@ git push origin main
 Windows：Ctrl + F5
 ```
 
+如果更新了 `style.css` 或 `script.js`，但线上仍显示旧效果，可以修改 `index.html` 顶部和底部引用中的版本号，例如：
+
+```html
+<link rel="stylesheet" href="style.css?v=20260908-2">
+<script src="script.js?v=20260908-2"></script>
+```
+
+每次把版本号改成新的值，就会让浏览器和CDN重新下载最新文件。
+
 ## 8. 删除或调整图片顺序
 
 ### 删除图片
