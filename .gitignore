@@ -46,11 +46,8 @@
 # Generated cook ordering logs. Keep any other intentional Build resources.
 /Build/*/FileOpenOrder/
 
-# Generated output inside project plugins. Plugin source/content and content stay tracked.
-/Plugins/*/Binaries/
-/Plugins/*/Intermediate/
-/Plugins/*/DerivedDataCache/
-/Plugins/*/Saved/
+# Project plugins are local and never committed.
+/Plugins/
 
 # Compiler/linker products that may appear outside the standard folders.
 *.obj
