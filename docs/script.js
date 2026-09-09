@@ -33,6 +33,7 @@ if (carousel) {
   let touchStartX = 0;
 
   // 根据 .carousel-slide 的数量自动生成导航圆点；新增图片时无需再修改页码。
+  dotsContainer.replaceChildren();
   const dots = slides.map((_, index) => {
     const dot = document.createElement('button');
     dot.type = 'button';

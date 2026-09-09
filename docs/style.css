@@ -77,10 +77,10 @@ button { font: inherit; }
 .hero { min-height: 100svh; position: relative; overflow: hidden; color: white; background: #17191c; }
 .hero-image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scale(1.04); animation: hero-in 1.6s cubic-bezier(.2,.7,.2,1) forwards; }
 .hero-shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(9,12,14,.88) 0%, rgba(9,12,14,.58) 34%, rgba(9,12,14,.1) 72%), linear-gradient(0deg, rgba(9,12,14,.7), transparent 48%); }
-.hero-content { position: relative; z-index: 2; padding: clamp(145px, 20vh, 220px) 7vw 120px; max-width: 880px; }
+.hero-content { position: absolute; z-index: 2; left: 7vw; bottom: 120px; width: min(880px, 86vw); padding: 0; }
 .eyebrow { margin: 0 0 22px; font-size: 11px; font-weight: 750; letter-spacing: .23em; text-transform: uppercase; }
 .eyebrow.dark { color: var(--signal-dark); }
-.hero h1 { margin: 0; font-size: clamp(65px, 10vw, 146px); line-height: .9; letter-spacing: -.075em; font-weight: 850; }
+.hero h1 { margin: 0; font-size: clamp(65px, 8vw, 116px); line-height: .9; letter-spacing: .07em; font-weight: 850; }
 .hero-en { margin: 18px 0 42px; font-size: clamp(12px, 1.25vw, 18px); font-weight: 700; letter-spacing: .24em; }
 .hero-lead { margin: 0 0 38px; font-size: clamp(18px, 1.7vw, 25px); line-height: 1.6; font-weight: 450; }
 .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
@@ -131,7 +131,7 @@ button { font: inherit; }
 .intro-detail p { margin: 0 0 22px; font-size: 16px; line-height: 1.95; color: #494c4b; }
 .intro-detail p:first-child { color: var(--ink); font-size: 19px; font-weight: 650; }
 
-.manifesto { padding: 24px 0; color: white; background: var(--signal); overflow: hidden; transform: rotate(-1deg) scale(1.02); }
+.manifesto { position: relative; z-index: 5; isolation: isolate; padding: 24px 0; color: white; background: var(--signal); overflow: hidden; transform: rotate(-1deg) scale(1.02); }
 .ticker { display: flex; width: max-content; font-size: clamp(25px, 3.2vw, 48px); font-weight: 850; letter-spacing: -.04em; white-space: nowrap; animation: ticker 23s linear infinite; will-change: transform; }
 .ticker span { flex: 0 0 auto; min-width: 100vw; padding-right: 2.5vw; }
 
@@ -170,6 +170,7 @@ button { font: inherit; }
   color: white;
   background: var(--ink);
 }
+.theme .growth-statement { margin-top: 0; }
 .growth-word {
   min-height: 100%;
   display: flex;
@@ -246,7 +247,7 @@ footer p { margin: 0; }
 
 @media (max-width: 900px) {
   .site-header nav { display: none; }
-  .hero-content { padding-left: 6vw; padding-right: 6vw; }
+  .hero-content { left: 6vw; width: 88vw; }
   .hero-meta span:last-child, .scroll-hint { display: none; }
   .quick-gallery-head { align-items: flex-start; flex-direction: column; gap: 20px; }
   .carousel { aspect-ratio: 16 / 10; }
@@ -262,6 +263,7 @@ footer p { margin: 0; }
   :root { --header-h: 62px; }
   .site-header { padding: 0 20px; }
   .brand span:last-child { display: none; }
+  .hero-content { bottom: 105px; }
   .hero-image { object-position: 62% center; }
   .hero-shade { background: linear-gradient(90deg, rgba(9,12,14,.9), rgba(9,12,14,.25)), linear-gradient(0deg, rgba(9,12,14,.78), transparent 55%); }
   .hero h1 { font-size: 61px; max-width: 350px; }
