@@ -27,6 +27,7 @@ void AGGJLevelCountdownActor::StartCountdown(const float DurationSeconds)
     if (CountdownWidget)
     {
         CountdownWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
+        CountdownWidget->StartCountdownPresentation(PresentationSettings);
     }
     SetActorTickEnabled(true);
     OnCountdownStarted.Broadcast();
@@ -87,6 +88,7 @@ void AGGJLevelCountdownActor::CancelCountdown(const bool bHideWidget)
     SetActorTickEnabled(false);
     if (bHideWidget && CountdownWidget)
     {
+        CountdownWidget->ResetCountdownPresentation();
         CountdownWidget->SetVisibility(ESlateVisibility::Collapsed);
     }
 }
@@ -147,6 +149,7 @@ void AGGJLevelCountdownActor::RefreshWidgetAndEvents()
     if (CountdownWidget)
     {
         CountdownWidget->SetCountdownText(FormattedTime);
+        CountdownWidget->UpdateCountdownPresentation(RemainingSeconds);
     }
     OnCountdownUpdated.Broadcast(RemainingSeconds, FormattedTime);
 }
@@ -162,6 +165,7 @@ void AGGJLevelCountdownActor::FinishCountdown()
     if (CountdownWidget)
     {
         CountdownWidget->SetCountdownText(FormatMilliseconds(0));
+        CountdownWidget->UpdateCountdownPresentation(0.f);
     }
     SetActorTickEnabled(false);
     OnCountdownUpdated.Broadcast(0.f, FormatMilliseconds(0));

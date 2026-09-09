@@ -183,10 +183,7 @@ void AGGJGroupCameraActor::Tick(const float DeltaSeconds)
 bool AGGJGroupCameraActor::CalculateDesiredFrame(FVector& OutFocus, float& OutDistance) const
 {
     TArray<AGGJPhysicalAnimationCharacter*> Members;
-    if (const AGGJCharacterGroupManager* Manager = GroupManager.Get())
-    {
-        Members = Manager->GetMembers();
-    }
+    GatherTrackedMembers(Members);
 
     if (Members.IsEmpty())
     {
@@ -232,6 +229,16 @@ bool AGGJGroupCameraActor::CalculateDesiredFrame(FVector& OutFocus, float& OutDi
     const float SafeMax = FMath::Max(MinDistance, MaxDistance);
     OutDistance = FMath::Clamp(FitDistance, FMath::Max(200.f, MinDistance), SafeMax);
     return true;
+}
+
+void AGGJGroupCameraActor::GatherTrackedMembers(
+    TArray<AGGJPhysicalAnimationCharacter*>& OutMembers) const
+{
+    OutMembers.Reset();
+    if (const AGGJCharacterGroupManager* Manager = GroupManager.Get())
+    {
+        OutMembers = Manager->GetMembers();
+    }
 }
 
 bool AGGJGroupCameraActor::RequestQuarterTurn(const int32 Direction)

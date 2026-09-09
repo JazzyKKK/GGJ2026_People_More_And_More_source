@@ -4,9 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "UI/GGJCountdownWidget.h"
 #include "GGJLevelCountdownActor.generated.h"
-
-class UGGJCountdownWidget;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FGGJCountdownSimpleSignature);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FGGJCountdownUpdatedSignature,
@@ -73,6 +72,10 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Level Countdown|UI")
     int32 WidgetZOrder = 100;
+
+    /** 开场居中提示、平滑归位和最后30秒颜色呼吸的全部可调参数。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Level Countdown|UI")
+    FGGJCountdownPresentationSettings PresentationSettings;
 
     UPROPERTY(BlueprintAssignable, Category="Level Countdown|Events")
     FGGJCountdownSimpleSignature OnCountdownStarted;

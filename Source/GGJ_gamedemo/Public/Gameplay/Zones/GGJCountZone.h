@@ -8,6 +8,7 @@
 
 class UBoxComponent;
 class UTextRenderComponent;
+class UGGJSquareZoneVFXComponent;
 class AGGJCharacterGroupManager;
 
 UENUM(BlueprintType)
@@ -95,6 +96,93 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Gameplay Zone|Components")
     TObjectPtr<UTextRenderComponent> CustomFloatingText;
 
+    /** 方形边界与方块粒子提示，只负责表现，不参与人数检测。 */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Gameplay Zone|Components")
+    TObjectPtr<UGGJSquareZoneVFXComponent> SquareZoneVFX;
+
+    /** 是否在游戏中显示方形区域提示特效。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Gameplay Zone|Square VFX")
+    bool bShowSquareZoneVFX = true;
+
+    /** 是否绘制贴合检测范围的方形地面边框。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Gameplay Zone|Square VFX",
+        meta=(EditCondition="bShowSquareZoneVFX"))
+    bool bShowSquareBoundary = true;
+
+    /** 特效相对于检测区域中心的高度；用于贴合实际地面。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Gameplay Zone|Square VFX",
+        meta=(EditCondition="bShowSquareZoneVFX", Units="cm"))
+    float SquareVFXHeightOffset = 5.f;
+
+    /** 同时显示的方块粒子数量。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Gameplay Zone|Square VFX",
+        meta=(EditCondition="bShowSquareZoneVFX", ClampMin="4", ClampMax="512"))
+    int32 SquareParticleCount = 72;
+
+    /** 方块粒子向上升起的最大高度。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Gameplay Zone|Square VFX",
+        meta=(EditCondition="bShowSquareZoneVFX", ClampMin="10.0", Units="cm"))
+    float SquareParticleRiseHeight = 190.f;
+
+    /** 方块粒子的上升速度。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Gameplay Zone|Square VFX",
+        meta=(EditCondition="bShowSquareZoneVFX", ClampMin="1.0", Units="cm/s"))
+    float SquareParticleRiseSpeed = 90.f;
+
+    /** 方块粒子沿区域四边循环运动的速度；设为 0 时只会上升。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Gameplay Zone|Square VFX",
+        meta=(EditCondition="bShowSquareZoneVFX", Units="cm/s"))
+    float SquareParticleOrbitSpeed = 65.f;
+
+    /**
+     * 使用世界空间粒子尺寸。开启后方块在场景中的实际大小稳定，
+     * 镜头拉远时会在屏幕中自然缩小，避免大量粒子糊在一起。
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Gameplay Zone|Square VFX",
+        meta=(EditCondition="bShowSquareZoneVFX"))
+    bool bUseWorldSpaceSquareParticleSize = true;
+
+    /** 世界空间中方块粒子的近似边长。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Gameplay Zone|Square VFX",
+        meta=(EditCondition="bShowSquareZoneVFX && bUseWorldSpaceSquareParticleSize", ClampMin="0.5", ClampMax="200.0", Units="cm"))
+    float SquareParticleWorldSize = 22.f;
+
+    /** 固定屏幕像素大小；仅在关闭世界空间尺寸时使用。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Gameplay Zone|Square VFX",
+        meta=(EditCondition="bShowSquareZoneVFX && !bUseWorldSpaceSquareParticleSize", ClampMin="1.0", ClampMax="40.0", EditConditionHides))
+    float SquareParticleSize = 7.f;
+
+    /** 较大方块在全部粒子中的比例。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Gameplay Zone|Square VFX",
+        meta=(EditCondition="bShowSquareZoneVFX", ClampMin="0.0", ClampMax="1.0"))
+    float SquareLargeParticleRatio = 0.2f;
+
+    /** 方形地面边框线宽。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Gameplay Zone|Square VFX",
+        meta=(EditCondition="bShowSquareZoneVFX && bShowSquareBoundary", ClampMin="0.5", ClampMax="24.0"))
+    float SquareBoundaryThickness = 4.f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Gameplay Zone|Square VFX",
+        meta=(EditCondition="bShowSquareZoneVFX"))
+    FLinearColor SquareWaitingColor = FLinearColor(0.12f, 0.72f, 1.f, 0.9f);
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Gameplay Zone|Square VFX",
+        meta=(EditCondition="bShowSquareZoneVFX"))
+    FLinearColor SquareActiveColor = FLinearColor(1.f, 0.5f, 0.08f, 0.95f);
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Gameplay Zone|Square VFX",
+        meta=(EditCondition="bShowSquareZoneVFX"))
+    FLinearColor SquareSuccessColor = FLinearColor(0.15f, 1.f, 0.42f, 0.95f);
+
+    /** 改变随机种子可获得不同但稳定的方块分布。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Gameplay Zone|Square VFX",
+        meta=(EditCondition="bShowSquareZoneVFX"))
+    int32 SquareParticleRandomSeed = 2026;
+
+    /** 蓝图在运行时修改范围或外观参数后，可调用此函数立即刷新特效。 */
+    UFUNCTION(BlueprintCallable, Category="Gameplay Zone|Square VFX")
+    void RefreshSquareZoneVFX();
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Gameplay Zone|Visual", meta=(Units="cm"))
     float TextHeight = 260.f;
 
@@ -161,9 +249,13 @@ private:
     AGGJCharacterGroupManager* ResolveManager();
     FText GetComparisonLabel() const;
     void UpdateVisual(float DeltaSeconds);
+    void SynchronizeSquareZoneVFX(bool bForceRefresh = false);
 
     UPROPERTY(Transient)
     TWeakObjectPtr<AGGJCharacterGroupManager> GroupManager;
 
     float VisualTime = 0.f;
+    FVector2D LastSquareVFXExtent = FVector2D::ZeroVector;
+    FLinearColor LastSquareVFXColor = FLinearColor::Transparent;
+    bool bLastSquareVFXVisible = false;
 };

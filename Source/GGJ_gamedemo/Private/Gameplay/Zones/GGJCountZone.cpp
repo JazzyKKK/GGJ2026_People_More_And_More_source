@@ -7,6 +7,7 @@
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "GameFramework/PlayerController.h"
+#include "Gameplay/Effects/GGJSquareZoneVFX.h"
 #include "Gameplay/Zones/GGJZoneDetection.h"
 
 AGGJCountZone::AGGJCountZone()
@@ -42,6 +43,10 @@ AGGJCountZone::AGGJCountZone()
     CustomFloatingText->SetTextRenderColor(CustomFloatingTextColor.ToFColor(true));
     CustomFloatingText->SetCastShadow(false);
     CustomFloatingText->SetVisibility(false);
+
+    // 独立的轻量渲染组件：无碰撞，不会改变 CountBounds 的检测结果。
+    SquareZoneVFX = CreateDefaultSubobject<UGGJSquareZoneVFXComponent>(TEXT("SquareZoneVFX"));
+    SquareZoneVFX->SetupAttachment(CountBounds);
 }
 
 void AGGJCountZone::OnConstruction(const FTransform& Transform)
@@ -62,6 +67,7 @@ void AGGJCountZone::OnConstruction(const FTransform& Transform)
         CustomFloatingText->SetTextRenderColor(CustomFloatingTextColor.ToFColor(true));
         CustomFloatingText->SetVisibility(bShowCustomFloatingText);
     }
+    SynchronizeSquareZoneVFX(true);
 }
 
 void AGGJCountZone::BeginPlay()
@@ -69,6 +75,7 @@ void AGGJCountZone::BeginPlay()
     Super::BeginPlay();
     ResolveManager();
     RefreshCountState();
+    SynchronizeSquareZoneVFX(true);
 }
 
 void AGGJCountZone::Tick(const float DeltaSeconds)
@@ -76,6 +83,60 @@ void AGGJCountZone::Tick(const float DeltaSeconds)
     Super::Tick(DeltaSeconds);
     RefreshCountState();
     UpdateVisual(DeltaSeconds);
+    SynchronizeSquareZoneVFX();
+}
+
+void AGGJCountZone::RefreshSquareZoneVFX()
+{
+    SynchronizeSquareZoneVFX(true);
+}
+
+void AGGJCountZone::SynchronizeSquareZoneVFX(const bool bForceRefresh)
+{
+    if (!SquareZoneVFX || !CountBounds)
+    {
+        return;
+    }
+
+    const FVector BoxExtent = CountBounds->GetUnscaledBoxExtent();
+    const FVector2D NewExtent(
+        FMath::Max(10.f, FMath::Abs(BoxExtent.X)),
+        FMath::Max(10.f, FMath::Abs(BoxExtent.Y)));
+    const FLinearColor NewColor = bIsTriggered
+        ? SquareSuccessColor
+        : (InsidePopulation > 0 ? SquareActiveColor : SquareWaitingColor);
+    const bool bNeedsRefresh = bForceRefresh
+        || !NewExtent.Equals(LastSquareVFXExtent, 0.1f)
+        || !NewColor.Equals(LastSquareVFXColor, 0.001f)
+        || bLastSquareVFXVisible != bShowSquareZoneVFX;
+
+    SquareZoneVFX->SetVisibility(bShowSquareZoneVFX, true);
+    SquareZoneVFX->SetRelativeLocation(FVector(0.f, 0.f, SquareVFXHeightOffset));
+    if (!bNeedsRefresh)
+    {
+        return;
+    }
+
+    SquareZoneVFX->ZoneExtent = NewExtent;
+    SquareZoneVFX->RiseHeight = FMath::Max(10.f, SquareParticleRiseHeight);
+    SquareZoneVFX->RiseSpeed = FMath::Max(1.f, SquareParticleRiseSpeed);
+    SquareZoneVFX->OrbitSpeed = SquareParticleOrbitSpeed;
+    SquareZoneVFX->bUseWorldSpaceParticleSize = bUseWorldSpaceSquareParticleSize;
+    SquareZoneVFX->WorldParticleSize = FMath::Max(0.5f, SquareParticleWorldSize);
+    SquareZoneVFX->PixelSize = FMath::Clamp(SquareParticleSize, 1.f, 40.f);
+    SquareZoneVFX->BoundaryThickness = FMath::Clamp(SquareBoundaryThickness, 0.5f, 24.f);
+    SquareZoneVFX->ParticleCount = FMath::Clamp(SquareParticleCount, 4, 512);
+    SquareZoneVFX->LargeParticleRatio = FMath::Clamp(SquareLargeParticleRatio, 0.f, 1.f);
+    SquareZoneVFX->RandomSeed = SquareParticleRandomSeed;
+    SquareZoneVFX->bDrawBoundary = bShowSquareBoundary;
+    SquareZoneVFX->PrimaryColor = NewColor;
+    SquareZoneVFX->SecondaryColor = FMath::Lerp(NewColor, FLinearColor::White, 0.52f);
+    SquareZoneVFX->UpdateBounds();
+    SquareZoneVFX->MarkRenderStateDirty();
+
+    LastSquareVFXExtent = NewExtent;
+    LastSquareVFXColor = NewColor;
+    bLastSquareVFXVisible = bShowSquareZoneVFX;
 }
 
 AGGJCharacterGroupManager* AGGJCountZone::ResolveManager()

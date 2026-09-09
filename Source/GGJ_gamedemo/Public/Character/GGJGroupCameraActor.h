@@ -186,6 +186,14 @@ public:
 protected:
     virtual void BeginPlay() override;
 
+    /**
+     * 收集本相机需要纳入质心和自动缩放计算的人物。
+     * 默认只返回旧版单人 GroupManager 的成员；派对实验相机覆写它来合并多个玩家的人群。
+     * 这个扩展点不改变现有关卡行为。
+     */
+    virtual void GatherTrackedMembers(
+        TArray<AGGJPhysicalAnimationCharacter*>& OutMembers) const;
+
     /** 固定相机不调用基类 BeginPlay，因此该函数也向子类开放。 */
     void RefreshOcclusionOutlinePostProcess();
 
