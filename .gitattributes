@@ -1,2 +1,1 @@
-*.uasset filter=lfs diff=lfs merge=lfs -text
-*.umap filter=lfs diff=lfs merge=lfs -text
+Content/GGJ/Level/level3/Demonstration3.umap filter=lfs diff=lfs merge=lfs -text
