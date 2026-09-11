@@ -8,6 +8,7 @@
 #include "PartyExperiment/GGJPartyPlayerController.h"
 #include "PartyExperiment/GGJPartyPopulationGroup.h"
 #include "PartyExperiment/Zones/GGJPartySpawnZone.h"
+#include "UI/GGJPauseMenuManager.h"
 
 AGGJPartyGameMode::AGGJPartyGameMode()
 {
@@ -17,6 +18,7 @@ AGGJPartyGameMode::AGGJPartyGameMode()
     PopulationGroupClass = AGGJPartyPopulationGroup::StaticClass();
     PartyCameraClass = AGGJPartyCameraActor::StaticClass();
     DefaultMemberClass = AGGJPhysicalAnimationCharacter::StaticClass();
+    PauseMenuManagerClass = AGGJPauseMenuManager::StaticClass();
 
     FGGJPartyPlayerSetup PlayerOne;
     PlayerOne.PlayerIndex = 0;
@@ -36,6 +38,7 @@ void AGGJPartyGameMode::StartPlay()
     Super::StartPlay();
     CreatePopulationGroups();
     CreateAndActivateCamera();
+    CreatePauseMenu();
 }
 
 void AGGJPartyGameMode::CreatePopulationGroups()
@@ -259,4 +262,40 @@ void AGGJPartyGameMode::ApplyPlayerScreenMovement(const int32 PlayerIndex,
 bool AGGJPartyGameMode::RequestSharedCameraTurn(const int32 Direction)
 {
     return PartyCamera && PartyCamera->RequestQuarterTurn(Direction);
+}
+
+void AGGJPartyGameMode::ApplyPlayerJumpStart(const int32 PlayerIndex)
+{
+    if (AGGJPartyPopulationGroup* Group = GetPlayerGroup(PlayerIndex))
+    {
+        Group->ApplySharedJumpStart();
+    }
+}
+
+void AGGJPartyGameMode::ApplyPlayerJumpEnd(const int32 PlayerIndex)
+{
+    if (AGGJPartyPopulationGroup* Group = GetPlayerGroup(PlayerIndex))
+    {
+        Group->ApplySharedJumpEnd();
+    }
+}
+
+void AGGJPartyGameMode::CreatePauseMenu()
+{
+    if (!GetWorld())
+    {
+        return;
+    }
+
+    // 与单人模式保持一致：优先复用关卡中手动放置的蓝图子类，没有时才自动创建。
+    for (TActorIterator<AGGJPauseMenuManager> It(GetWorld()); It; ++It)
+    {
+        PauseMenuManager = *It;
+        break;
+    }
+    if (!PauseMenuManager && PauseMenuManagerClass)
+    {
+        PauseMenuManager = GetWorld()->SpawnActor<AGGJPauseMenuManager>(
+            PauseMenuManagerClass, FTransform::Identity);
+    }
 }

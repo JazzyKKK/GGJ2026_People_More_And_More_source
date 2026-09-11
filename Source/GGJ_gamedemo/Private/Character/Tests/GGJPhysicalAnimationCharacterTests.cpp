@@ -455,6 +455,27 @@ bool FPhysicalCharacterFlowZoneTest::RunTest(const FString& Parameters)
     Zone->ApplyFlowToCharacter(Character, 0.5f);
     TestTrue(TEXT("Wind mode adds acceleration without instantly reaching its cap"),
         FMath::IsNearlyEqual(Movement->Velocity.Y, 100.f, 0.1f));
+
+    Zone->SetActorRotation(FRotator(90.f, 0.f, 0.f));
+    Zone->bUseFull3DDirection = true;
+    Zone->bAutoLiftGroundedCharacters = true;
+    Zone->AutoLiftMinimumDirectionZ = 0.1f;
+    Zone->FlowSpeed = 650.f;
+    Zone->Acceleration = 1600.f;
+    Movement->Velocity = FVector::ZeroVector;
+    Movement->SetMovementMode(MOVE_Walking);
+    Zone->ApplyFlowToCharacter(Character, 0.1f);
+    TestTrue(TEXT("Upward flow automatically releases a grounded character"),
+        Movement->MovementMode == MOVE_Falling);
+    TestTrue(TEXT("Upward flow gives positive vertical velocity without jump input"),
+        Movement->Velocity.Z > 0.f);
+
+    Zone->bAutoLiftGroundedCharacters = false;
+    Movement->Velocity = FVector::ZeroVector;
+    Movement->SetMovementMode(MOVE_Walking);
+    Zone->ApplyFlowToCharacter(Character, 0.1f);
+    TestTrue(TEXT("Automatic lift can be disabled for sloped conveyors"),
+        Movement->MovementMode == MOVE_Walking);
     return true;
 }
 

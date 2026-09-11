@@ -40,7 +40,7 @@ struct FGGJPartyPlayerSetup
 };
 
 /**
- * 同一块键盘上的一套方向键。
+ * 同一块键盘上的一套方向键和跳跃键。
  * PlayerController 每帧遍历该数组，因此以后增加 IJKL 等方案不需要新增控制代码。
  */
 USTRUCT(BlueprintType)
@@ -66,4 +66,11 @@ struct FGGJPartyKeyboardControlScheme
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Party Input")
     FKey MoveRightKey = EKeys::D;
+
+    /**
+     * 该玩家整组人物的跳跃键。留空时使用兼容默认值：玩家0=Space、玩家1=Right Shift。
+     * 这样旧的蓝图数组在新增本字段后也能直接获得正确的双人跳跃键。
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Party Input")
+    FKey JumpKey;
 };

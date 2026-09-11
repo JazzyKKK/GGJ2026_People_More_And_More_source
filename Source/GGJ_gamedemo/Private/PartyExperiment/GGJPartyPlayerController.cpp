@@ -13,6 +13,7 @@ AGGJPartyPlayerController::AGGJPartyPlayerController()
     PlayerOne.MoveDownKey = EKeys::S;
     PlayerOne.MoveLeftKey = EKeys::A;
     PlayerOne.MoveRightKey = EKeys::D;
+    PlayerOne.JumpKey = EKeys::SpaceBar;
     KeyboardControlSchemes.Add(PlayerOne);
 
     FGGJPartyKeyboardControlScheme PlayerTwo;
@@ -21,6 +22,7 @@ AGGJPartyPlayerController::AGGJPartyPlayerController()
     PlayerTwo.MoveDownKey = EKeys::Down;
     PlayerTwo.MoveLeftKey = EKeys::Left;
     PlayerTwo.MoveRightKey = EKeys::Right;
+    PlayerTwo.JumpKey = EKeys::RightShift;
     KeyboardControlSchemes.Add(PlayerTwo);
 }
 
@@ -68,6 +70,21 @@ void AGGJPartyPlayerController::PlayerTick(const float DeltaTime)
             ReadDigitalAxis(Scheme.MoveUpKey, Scheme.MoveDownKey));
         PartyGameMode->ApplyPlayerScreenMovement(Scheme.PlayerIndex,
             ScreenMovement.GetClampedToMaxSize(1.f));
+
+        // 跳跃需要按下/松开两个边沿，不能像方向那样每帧重复调用。
+        // 每套键位把事件只发给自己的 PopulationGroup，因此两群人物可以独立跳跃。
+        const FKey JumpKey = ResolveJumpKey(Scheme);
+        if (JumpKey.IsValid())
+        {
+            if (WasInputKeyJustPressed(JumpKey))
+            {
+                PartyGameMode->ApplyPlayerJumpStart(Scheme.PlayerIndex);
+            }
+            if (WasInputKeyJustReleased(JumpKey))
+            {
+                PartyGameMode->ApplyPlayerJumpEnd(Scheme.PlayerIndex);
+            }
+        }
     }
 }
 
@@ -77,6 +94,26 @@ float AGGJPartyPlayerController::ReadDigitalAxis(const FKey& PositiveKey,
     const float Positive = IsInputKeyDown(PositiveKey) ? 1.f : 0.f;
     const float Negative = IsInputKeyDown(NegativeKey) ? 1.f : 0.f;
     return Positive - Negative;
+}
+
+FKey AGGJPartyPlayerController::ResolveJumpKey(
+    const FGGJPartyKeyboardControlScheme& Scheme) const
+{
+    if (Scheme.JumpKey.IsValid())
+    {
+        return Scheme.JumpKey;
+    }
+
+    // 兼容已经保存过 KeyboardControlSchemes 的旧蓝图：新字段初次加载通常是 None。
+    if (Scheme.PlayerIndex == 0)
+    {
+        return EKeys::SpaceBar;
+    }
+    if (Scheme.PlayerIndex == 1)
+    {
+        return EKeys::RightShift;
+    }
+    return FKey();
 }
 
 void AGGJPartyPlayerController::RotateCameraLeft()

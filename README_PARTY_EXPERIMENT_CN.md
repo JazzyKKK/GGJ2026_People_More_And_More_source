@@ -36,9 +36,10 @@ Content/GGJ/PartyExperiment/
    - 第一个 `PlayerIndex=0`，属于玩家一。
    - 第二个 `PlayerIndex=1`，属于玩家二。
 5. Play：
-   - P1：W/A/S/D。
-   - P2：键盘方向键。
+   - P1：W/A/S/D 移动，Space 跳跃。
+   - P2：键盘方向键移动，Right Shift 跳跃。
    - 共享视角：Q/E，每次平滑旋转 90 度。
+   - 暂停菜单：ESC；暂停时再次按 ESC 可以回到游戏。
 
 同一玩家可以放多个 SpawnZone。只要它们的 `PlayerIndex` 相同，开局人数就会按照
 `SpawnOrder` 自动平均分配。
@@ -69,6 +70,21 @@ Get Game Mode
 人物会由对应 `GGJPartyPopulationGroup` 按 `RuntimeSpawnInterval` 逐个生成，并从
 `RuntimeSpawnDropHeight` 高度掉下。人口组的这两个参数可以在其蓝图子类或手放实例上调整。
 
+## 输入和暂停菜单配置
+
+双人移动、跳跃键位位于 `GGJPartyPlayerController.KeyboardControlSchemes`。默认配置为：
+
+- `PlayerIndex=0`：W/A/S/D，`JumpKey=Space Bar`。
+- `PlayerIndex=1`：方向键，`JumpKey=Right Shift`。
+
+如果要在蓝图中改键，创建 `GGJPartyPlayerController` 的蓝图子类，修改上述数组，然后在
+`BP_PartyGameMode → Player Controller Class` 选择这个控制器蓝图。旧控制器蓝图中新增的
+`JumpKey` 即使显示为 None，玩家0和玩家1仍会分别回退到 Space 和 Right Shift。
+
+`GGJPartyGameMode` 会自动创建 `GGJPauseMenuManager`，因此关卡不需要额外放置 Actor。
+如需使用自定义菜单蓝图，在 `BP_PartyGameMode → Party Experiment | Pause Menu →
+Pause Menu Manager Class` 中替换；如果关卡已经手动放了一个管理器实例，则优先复用该实例。
+
 ## 人物互相推挤
 
 派对人口组默认开启 `Character Pushing`。它用于弥补 UE `ACharacter` 胶囊不会像真正刚体
@@ -89,12 +105,12 @@ Get Game Mode
 
 1. 在 `BP_PartyGameMode.PlayerSetups` 增加 `PlayerIndex=2`。
 2. 创建 `GGJPartyPlayerController` 的蓝图子类，在 `KeyboardControlSchemes` 增加
-   `PlayerIndex=2`，例如使用 I/J/K/L。
+   `PlayerIndex=2`，例如使用 I/J/K/L，并设置一个不冲突的 `JumpKey`。
 3. 在 `BP_PartyGameMode` 把 `PlayerControllerClass` 换成该控制器蓝图。
 4. 放置 `PlayerIndex=2` 的 PartySpawnZone。
 
-手柄输入以后直接调用 `Apply Player Screen Movement(PlayerIndex, ScreenMovement)` 即可，
-人口组、相机和增长接口都不需要修改。
+手柄输入以后直接调用 `Apply Player Screen Movement`、`Apply Player Jump Start` 和
+`Apply Player Jump End` 即可，人口组、相机和增长接口都不需要修改。
 
 ## 当前隔离限制
 

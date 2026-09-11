@@ -9,6 +9,7 @@
 #include "Components/ComboBoxString.h"
 #include "Components/HorizontalBox.h"
 #include "Components/HorizontalBoxSlot.h"
+#include "Components/Image.h"
 #include "Components/Overlay.h"
 #include "Components/OverlaySlot.h"
 #include "Components/SizeBox.h"
@@ -27,12 +28,15 @@ namespace GGJPauseMenuStyle
     const FLinearColor PressedText(0.60f, 0.84f, 1.f, 1.f);
     const FLinearColor MutedText(0.62f, 0.68f, 0.76f, 0.90f);
     const FLinearColor Accent(0.62f, 0.84f, 1.f, 1.f);
+    const FLinearColor PreviewBackground(0.025f, 0.035f, 0.055f, 0.82f);
+    const FLinearColor PreviewCode(0.62f, 0.84f, 1.f, 0.28f);
 }
 
 void UGGJPauseMenuWidget::InitializePauseMenu(AGGJPauseMenuManager* InManager)
 {
     Manager = InManager;
     PopulateSettings();
+    PopulateLevelPreviews();
 }
 
 TSharedRef<SWidget> UGGJPauseMenuWidget::RebuildWidget()
@@ -101,8 +105,8 @@ TSharedRef<SWidget> UGGJPauseMenuWidget::RebuildWidget()
         FText::FromString(TEXT("回到游戏")), TEXT("ResumeButton"));
     UButton* SettingsButton = MakeMenuButton(MainPanel,
         FText::FromString(TEXT("设置")), TEXT("SettingsButton"));
-    UButton* DeveloperLevelButton = MakeMenuButton(MainPanel,
-        FText::FromString(TEXT("开发者关卡")), TEXT("DeveloperLevelButton"));
+    UButton* LevelSelectionButton = MakeMenuButton(MainPanel,
+        FText::FromString(TEXT("关卡选择")), TEXT("LevelSelectionButton"));
     UButton* MainMenuButton = MakeMenuButton(MainPanel,
         FText::FromString(TEXT("退出到主菜单")), TEXT("MainMenuButton"));
     UButton* QuitButton = MakeMenuButton(MainPanel,
@@ -110,8 +114,8 @@ TSharedRef<SWidget> UGGJPauseMenuWidget::RebuildWidget()
 
     ResumeButton->OnClicked.AddDynamic(this, &UGGJPauseMenuWidget::HandleResumeClicked);
     SettingsButton->OnClicked.AddDynamic(this, &UGGJPauseMenuWidget::HandleSettingsClicked);
-    DeveloperLevelButton->OnClicked.AddDynamic(this,
-        &UGGJPauseMenuWidget::HandleDeveloperLevelClicked);
+    LevelSelectionButton->OnClicked.AddDynamic(this,
+        &UGGJPauseMenuWidget::HandleLevelSelectionClicked);
     MainMenuButton->OnClicked.AddDynamic(this, &UGGJPauseMenuWidget::HandleMainMenuClicked);
     QuitButton->OnClicked.AddDynamic(this, &UGGJPauseMenuWidget::HandleQuitClicked);
 
@@ -173,7 +177,54 @@ TSharedRef<SWidget> UGGJPauseMenuWidget::RebuildWidget()
     ApplyButton->OnClicked.AddDynamic(this, &UGGJPauseMenuWidget::HandleApplySettingsClicked);
     BackButton->OnClicked.AddDynamic(this, &UGGJPauseMenuWidget::HandleSettingsBackClicked);
 
+    // 主暂停菜单保持左下角文字导航；关卡预览需要更大阅读面积，因此独立居中显示。
+    LevelSelectionContainer = WidgetTree->ConstructWidget<USizeBox>(
+        USizeBox::StaticClass(), TEXT("LevelSelectionSize"));
+    LevelSelectionContainer->SetWidthOverride(1180.f);
+    LevelSelectionContainer->SetVisibility(ESlateVisibility::Collapsed);
+    UOverlaySlot* LevelSelectionSizeSlot = Root->AddChildToOverlay(LevelSelectionContainer);
+    LevelSelectionSizeSlot->SetHorizontalAlignment(HAlign_Center);
+    LevelSelectionSizeSlot->SetVerticalAlignment(VAlign_Center);
+    LevelSelectionSizeSlot->SetPadding(FMargin(32.f));
+
+    LevelSelectionPanel = WidgetTree->ConstructWidget<UVerticalBox>(
+        UVerticalBox::StaticClass(), TEXT("LevelSelectionPanel"));
+    LevelSelectionContainer->AddChild(LevelSelectionPanel);
+
+    MakeLabel(LevelSelectionPanel, FText::FromString(TEXT("关卡选择")), 42);
+    UTextBlock* LevelSubtitle = MakeLabel(LevelSelectionPanel,
+        FText::FromString(TEXT("SELECT A DESTINATION")), 12);
+    LevelSubtitle->SetColorAndOpacity(GGJPauseMenuStyle::Accent);
+
+    UHorizontalBox* LevelCards = WidgetTree->ConstructWidget<UHorizontalBox>(
+        UHorizontalBox::StaticClass(), TEXT("LevelCards"));
+    UVerticalBoxSlot* LevelCardsSlot = LevelSelectionPanel->AddChildToVerticalBox(LevelCards);
+    LevelCardsSlot->SetPadding(FMargin(0.f, 24.f, 0.f, 20.f));
+    LevelCardsSlot->SetHorizontalAlignment(HAlign_Center);
+
+    UButton* Level1Button = MakeLevelCard(LevelCards, FText::FromString(TEXT("LEVEL 1")),
+        FText::FromString(TEXT("01")), TEXT("Level1Button"), Level1PreviewImage);
+    UButton* Level2Button = MakeLevelCard(LevelCards, FText::FromString(TEXT("LEVEL 2")),
+        FText::FromString(TEXT("02")), TEXT("Level2Button"), Level2PreviewImage);
+    UButton* Level3Button = MakeLevelCard(LevelCards, FText::FromString(TEXT("LEVEL 3")),
+        FText::FromString(TEXT("03")), TEXT("Level3Button"), Level3PreviewImage);
+    UButton* DeveloperButton = MakeLevelCard(LevelCards,
+        FText::FromString(TEXT("开发者关卡")), FText::FromString(TEXT("DEV")),
+        TEXT("DeveloperLevelButton"), DeveloperPreviewImage);
+
+    Level1Button->OnClicked.AddDynamic(this, &UGGJPauseMenuWidget::HandleLevel1Clicked);
+    Level2Button->OnClicked.AddDynamic(this, &UGGJPauseMenuWidget::HandleLevel2Clicked);
+    Level3Button->OnClicked.AddDynamic(this, &UGGJPauseMenuWidget::HandleLevel3Clicked);
+    DeveloperButton->OnClicked.AddDynamic(this,
+        &UGGJPauseMenuWidget::HandleDeveloperLevelClicked);
+
+    UButton* LevelBackButton = MakeMenuButton(LevelSelectionPanel,
+        FText::FromString(TEXT("返回")), TEXT("LevelSelectionBackButton"));
+    LevelBackButton->OnClicked.AddDynamic(this,
+        &UGGJPauseMenuWidget::HandleLevelSelectionBackClicked);
+
     PopulateSettings();
+    PopulateLevelPreviews();
     return Super::RebuildWidget();
 }
 
@@ -182,6 +233,7 @@ void UGGJPauseMenuWidget::NativeConstruct()
     Super::NativeConstruct();
     SetIsFocusable(true);
     PopulateSettings();
+    PopulateLevelPreviews();
 }
 
 FReply UGGJPauseMenuWidget::NativeOnKeyDown(const FGeometry& InGeometry,
@@ -189,6 +241,14 @@ FReply UGGJPauseMenuWidget::NativeOnKeyDown(const FGeometry& InGeometry,
 {
     if (InKeyEvent.GetKey() == EKeys::Escape && Manager)
     {
+        // 子页面先返回暂停菜单主页；只有在主页再次按 ESC 才回到游戏。
+        if ((SettingsPanel && SettingsPanel->GetVisibility() == ESlateVisibility::Visible)
+            || (LevelSelectionContainer
+                && LevelSelectionContainer->GetVisibility() == ESlateVisibility::Visible))
+        {
+            ShowMainPanel();
+            return FReply::Handled();
+        }
         Manager->ResumeGame();
         return FReply::Handled();
     }
@@ -252,6 +312,84 @@ UButton* UGGJPauseMenuWidget::MakeMenuButton(UVerticalBox* Parent,
     return Button;
 }
 
+UButton* UGGJPauseMenuWidget::MakeLevelCard(UHorizontalBox* Parent,
+    const FText& Label, const FText& Placeholder, const FName Name,
+    TObjectPtr<UImage>& OutPreviewImage)
+{
+    UButton* Button = WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(), Name);
+
+    // 卡片仍保持无边框，通过文字颜色和轻微位移响应悬停/点击。
+    FSlateBrush InvisibleBrush;
+    InvisibleBrush.DrawAs = ESlateBrushDrawType::NoDrawType;
+    FButtonStyle ButtonStyle = Button->GetStyle();
+    ButtonStyle
+        .SetNormal(InvisibleBrush)
+        .SetHovered(InvisibleBrush)
+        .SetPressed(InvisibleBrush)
+        .SetDisabled(InvisibleBrush)
+        .SetNormalForeground(FSlateColor(GGJPauseMenuStyle::Text))
+        .SetHoveredForeground(FSlateColor(GGJPauseMenuStyle::HoveredText))
+        .SetPressedForeground(FSlateColor(GGJPauseMenuStyle::PressedText))
+        .SetNormalPadding(FMargin(0.f))
+        .SetPressedPadding(FMargin(0.f, 3.f, 0.f, 0.f));
+    Button->SetStyle(ButtonStyle);
+
+    UVerticalBox* CardContent = WidgetTree->ConstructWidget<UVerticalBox>(
+        UVerticalBox::StaticClass(), *FString::Printf(TEXT("%s_Content"), *Name.ToString()));
+    Button->AddChild(CardContent);
+
+    USizeBox* PreviewSize = WidgetTree->ConstructWidget<USizeBox>(
+        USizeBox::StaticClass(), *FString::Printf(TEXT("%s_PreviewSize"), *Name.ToString()));
+    PreviewSize->SetWidthOverride(260.f);
+    PreviewSize->SetHeightOverride(146.f);
+    CardContent->AddChildToVerticalBox(PreviewSize);
+
+    UOverlay* PreviewOverlay = WidgetTree->ConstructWidget<UOverlay>(
+        UOverlay::StaticClass(), *FString::Printf(TEXT("%s_Preview"), *Name.ToString()));
+    PreviewSize->AddChild(PreviewOverlay);
+
+    UBorder* PreviewBackgroundWidget = WidgetTree->ConstructWidget<UBorder>(
+        UBorder::StaticClass(), *FString::Printf(TEXT("%s_Background"), *Name.ToString()));
+    PreviewBackgroundWidget->SetBrushColor(GGJPauseMenuStyle::PreviewBackground);
+    UOverlaySlot* BackgroundSlot = PreviewOverlay->AddChildToOverlay(PreviewBackgroundWidget);
+    BackgroundSlot->SetHorizontalAlignment(HAlign_Fill);
+    BackgroundSlot->SetVerticalAlignment(VAlign_Fill);
+
+    UTextBlock* PlaceholderText = WidgetTree->ConstructWidget<UTextBlock>(
+        UTextBlock::StaticClass(), *FString::Printf(TEXT("%s_Code"), *Name.ToString()));
+    PlaceholderText->SetText(Placeholder);
+    PlaceholderText->SetJustification(ETextJustify::Center);
+    PlaceholderText->SetColorAndOpacity(GGJPauseMenuStyle::PreviewCode);
+    FSlateFontInfo PlaceholderFont = PlaceholderText->GetFont();
+    PlaceholderFont.Size = 52;
+    PlaceholderText->SetFont(PlaceholderFont);
+    UOverlaySlot* PlaceholderSlot = PreviewOverlay->AddChildToOverlay(PlaceholderText);
+    PlaceholderSlot->SetHorizontalAlignment(HAlign_Center);
+    PlaceholderSlot->SetVerticalAlignment(VAlign_Center);
+
+    OutPreviewImage = WidgetTree->ConstructWidget<UImage>(UImage::StaticClass(),
+        *FString::Printf(TEXT("%s_Image"), *Name.ToString()));
+    OutPreviewImage->SetVisibility(ESlateVisibility::Collapsed);
+    UOverlaySlot* ImageSlot = PreviewOverlay->AddChildToOverlay(OutPreviewImage);
+    ImageSlot->SetHorizontalAlignment(HAlign_Fill);
+    ImageSlot->SetVerticalAlignment(VAlign_Fill);
+
+    UTextBlock* Caption = WidgetTree->ConstructWidget<UTextBlock>(
+        UTextBlock::StaticClass(), *FString::Printf(TEXT("%s_Label"), *Name.ToString()));
+    Caption->SetText(Label);
+    Caption->SetColorAndOpacity(FSlateColor::UseForeground());
+    FSlateFontInfo CaptionFont = Caption->GetFont();
+    CaptionFont.Size = 21;
+    Caption->SetFont(CaptionFont);
+    UVerticalBoxSlot* CaptionSlot = CardContent->AddChildToVerticalBox(Caption);
+    CaptionSlot->SetPadding(FMargin(0.f, 10.f, 0.f, 0.f));
+
+    UHorizontalBoxSlot* CardSlot = Parent->AddChildToHorizontalBox(Button);
+    CardSlot->SetPadding(FMargin(10.f, 0.f));
+    CardSlot->SetVerticalAlignment(VAlign_Top);
+    return Button;
+}
+
 void UGGJPauseMenuWidget::PopulateSettings()
 {
     if (!Manager || !VolumeSlider || !VolumeValueText
@@ -297,6 +435,51 @@ void UGGJPauseMenuWidget::PopulateSettings()
     }
 }
 
+void UGGJPauseMenuWidget::PopulateLevelPreviews()
+{
+    if (!Manager)
+    {
+        return;
+    }
+
+    const auto ApplyPreview = [](UImage* Image, UTexture2D* Texture)
+    {
+        if (!Image)
+        {
+            return;
+        }
+        if (Texture)
+        {
+            Image->SetBrushFromTexture(Texture, false);
+            Image->SetColorAndOpacity(FLinearColor::White);
+            Image->SetVisibility(ESlateVisibility::HitTestInvisible);
+        }
+        else
+        {
+            Image->SetVisibility(ESlateVisibility::Collapsed);
+        }
+    };
+
+    ApplyPreview(Level1PreviewImage,
+        Manager->GetLevelPreview(EGGJLevelDestination::Level1));
+    ApplyPreview(Level2PreviewImage,
+        Manager->GetLevelPreview(EGGJLevelDestination::Level2));
+    ApplyPreview(Level3PreviewImage,
+        Manager->GetLevelPreview(EGGJLevelDestination::Level3));
+    ApplyPreview(DeveloperPreviewImage,
+        Manager->GetLevelPreview(EGGJLevelDestination::Developer));
+}
+
+void UGGJPauseMenuWidget::ShowMainPanel()
+{
+    if (SettingsPanel) { SettingsPanel->SetVisibility(ESlateVisibility::Collapsed); }
+    if (LevelSelectionContainer)
+    {
+        LevelSelectionContainer->SetVisibility(ESlateVisibility::Collapsed);
+    }
+    if (MainPanel) { MainPanel->SetVisibility(ESlateVisibility::Visible); }
+}
+
 void UGGJPauseMenuWidget::HandleResumeClicked()
 {
     if (Manager) { Manager->ResumeGame(); }
@@ -306,7 +489,22 @@ void UGGJPauseMenuWidget::HandleSettingsClicked()
 {
     PopulateSettings();
     if (MainPanel) { MainPanel->SetVisibility(ESlateVisibility::Collapsed); }
+    if (LevelSelectionContainer)
+    {
+        LevelSelectionContainer->SetVisibility(ESlateVisibility::Collapsed);
+    }
     if (SettingsPanel) { SettingsPanel->SetVisibility(ESlateVisibility::Visible); }
+}
+
+void UGGJPauseMenuWidget::HandleLevelSelectionClicked()
+{
+    PopulateLevelPreviews();
+    if (MainPanel) { MainPanel->SetVisibility(ESlateVisibility::Collapsed); }
+    if (SettingsPanel) { SettingsPanel->SetVisibility(ESlateVisibility::Collapsed); }
+    if (LevelSelectionContainer)
+    {
+        LevelSelectionContainer->SetVisibility(ESlateVisibility::Visible);
+    }
 }
 
 void UGGJPauseMenuWidget::HandleMainMenuClicked()
@@ -319,6 +517,21 @@ void UGGJPauseMenuWidget::HandleDeveloperLevelClicked()
     if (Manager) { Manager->OpenDeveloperLevel(); }
 }
 
+void UGGJPauseMenuWidget::HandleLevel1Clicked()
+{
+    if (Manager) { Manager->OpenSelectedLevel(EGGJLevelDestination::Level1); }
+}
+
+void UGGJPauseMenuWidget::HandleLevel2Clicked()
+{
+    if (Manager) { Manager->OpenSelectedLevel(EGGJLevelDestination::Level2); }
+}
+
+void UGGJPauseMenuWidget::HandleLevel3Clicked()
+{
+    if (Manager) { Manager->OpenSelectedLevel(EGGJLevelDestination::Level3); }
+}
+
 void UGGJPauseMenuWidget::HandleQuitClicked()
 {
     if (Manager) { Manager->QuitGame(); }
@@ -326,8 +539,12 @@ void UGGJPauseMenuWidget::HandleQuitClicked()
 
 void UGGJPauseMenuWidget::HandleSettingsBackClicked()
 {
-    if (SettingsPanel) { SettingsPanel->SetVisibility(ESlateVisibility::Collapsed); }
-    if (MainPanel) { MainPanel->SetVisibility(ESlateVisibility::Visible); }
+    ShowMainPanel();
+}
+
+void UGGJPauseMenuWidget::HandleLevelSelectionBackClicked()
+{
+    ShowMainPanel();
 }
 
 void UGGJPauseMenuWidget::HandleApplySettingsClicked()

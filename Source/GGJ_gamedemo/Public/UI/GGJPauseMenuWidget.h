@@ -1,6 +1,6 @@
 #pragma once
 
-// 默认简约暂停菜单：返回游戏、设置、开发者关卡、主菜单、退出，以及显示和音量设置。
+// 默认简约暂停菜单：返回游戏、设置、关卡选择、主菜单、退出，以及显示和音量设置。
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
@@ -9,6 +9,9 @@
 class AGGJPauseMenuManager;
 class UButton;
 class UComboBoxString;
+class UHorizontalBox;
+class UImage;
+class USizeBox;
 class USlider;
 class UTextBlock;
 class UVerticalBox;
@@ -33,13 +36,19 @@ protected:
 
 private:
     UButton* MakeMenuButton(UVerticalBox* Parent, const FText& Label, FName Name);
+    UButton* MakeLevelCard(UHorizontalBox* Parent, const FText& Label,
+        const FText& Placeholder, FName Name, TObjectPtr<UImage>& OutPreviewImage);
     UTextBlock* MakeLabel(UVerticalBox* Parent, const FText& Label, int32 FontSize);
     void PopulateSettings();
+    void PopulateLevelPreviews();
+    void ShowMainPanel();
 
     UFUNCTION()
     void HandleResumeClicked();
     UFUNCTION()
     void HandleSettingsClicked();
+    UFUNCTION()
+    void HandleLevelSelectionClicked();
     UFUNCTION()
     void HandleMainMenuClicked();
     UFUNCTION()
@@ -48,6 +57,14 @@ private:
     void HandleQuitClicked();
     UFUNCTION()
     void HandleSettingsBackClicked();
+    UFUNCTION()
+    void HandleLevelSelectionBackClicked();
+    UFUNCTION()
+    void HandleLevel1Clicked();
+    UFUNCTION()
+    void HandleLevel2Clicked();
+    UFUNCTION()
+    void HandleLevel3Clicked();
     UFUNCTION()
     void HandleApplySettingsClicked();
     UFUNCTION()
@@ -59,6 +76,18 @@ private:
     TObjectPtr<UVerticalBox> MainPanel;
     UPROPERTY(Transient)
     TObjectPtr<UVerticalBox> SettingsPanel;
+    UPROPERTY(Transient)
+    TObjectPtr<UVerticalBox> LevelSelectionPanel;
+    UPROPERTY(Transient)
+    TObjectPtr<USizeBox> LevelSelectionContainer;
+    UPROPERTY(Transient)
+    TObjectPtr<UImage> Level1PreviewImage;
+    UPROPERTY(Transient)
+    TObjectPtr<UImage> Level2PreviewImage;
+    UPROPERTY(Transient)
+    TObjectPtr<UImage> Level3PreviewImage;
+    UPROPERTY(Transient)
+    TObjectPtr<UImage> DeveloperPreviewImage;
     UPROPERTY(Transient)
     TObjectPtr<USlider> VolumeSlider;
     UPROPERTY(Transient)

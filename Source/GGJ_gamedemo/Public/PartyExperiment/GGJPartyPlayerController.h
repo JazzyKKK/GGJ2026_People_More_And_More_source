@@ -18,7 +18,8 @@ public:
     virtual void PlayerTick(float DeltaTime) override;
 
     /**
-     * 默认包含 P1=WASD、P2=方向键。添加新的数组元素即可扩展 IJKL 等键盘玩家；
+     * 默认包含 P1=WASD+Space、P2=方向键+Right Shift。
+     * 添加新的数组元素即可扩展 IJKL 等键盘玩家；
      * 手柄以后也可以把输入值转发给 GameMode.ApplyPlayerScreenMovement。
      */
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Party Experiment|Input")
@@ -37,6 +38,7 @@ protected:
 
 private:
     float ReadDigitalAxis(const FKey& PositiveKey, const FKey& NegativeKey) const;
+    FKey ResolveJumpKey(const FGGJPartyKeyboardControlScheme& Scheme) const;
     void RotateCameraLeft();
     void RotateCameraRight();
 };

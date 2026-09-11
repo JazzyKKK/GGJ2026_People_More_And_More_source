@@ -76,6 +76,23 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Gameplay Zone|Flow")
     bool bAffectFallingCharacters = true;
 
+    /**
+     * 向上风作用于站在地面的人物时，自动把 CharacterMovement 切换为 Falling。
+     * 否则 Walking 模式会清除竖直速度，表现为必须先按跳跃才能被风吹起。
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Gameplay Zone|Vertical Lift",
+        meta=(EditCondition="bUseFull3DDirection"))
+    bool bAutoLiftGroundedCharacters = true;
+
+    /**
+     * 风向 Z 分量达到该值才自动离地，避免轻微倾斜的传送带意外把人物抛起。
+     * 0.1 约等于向上倾斜 5.7 度；纯竖直向上的方向为 1。
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Gameplay Zone|Vertical Lift",
+        meta=(EditCondition="bUseFull3DDirection && bAutoLiftGroundedCharacters",
+            ClampMin="0.0", ClampMax="1.0", UIMin="0.0", UIMax="1.0"))
+    float AutoLiftMinimumDirectionZ = 0.1f;
+
     /** 组件的未缩放半尺寸；也可以直接用关卡缩放工具再次整体缩放。 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Gameplay Zone|Bounds",
         meta=(ClampMin="10.0", Units="cm"))

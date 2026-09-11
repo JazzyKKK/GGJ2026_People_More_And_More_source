@@ -12,6 +12,7 @@ class AGGJPartyCameraActor;
 class AGGJPartyPopulationGroup;
 class AGGJPartySpawnZone;
 class AGGJPhysicalAnimationCharacter;
+class AGGJPauseMenuManager;
 
 UCLASS(Blueprintable)
 class GGJ_GAMEDEMO_API AGGJPartyGameMode : public AGameModeBase
@@ -57,6 +58,14 @@ public:
     UFUNCTION(BlueprintCallable, Category="Party Experiment|Control")
     void ApplyPlayerScreenMovement(int32 PlayerIndex, FVector2D ScreenMovement);
 
+    /** 让指定玩家当前控制的整组人物开始跳跃。 */
+    UFUNCTION(BlueprintCallable, Category="Party Experiment|Control")
+    void ApplyPlayerJumpStart(int32 PlayerIndex);
+
+    /** 让指定玩家当前控制的整组人物结束跳跃按压。 */
+    UFUNCTION(BlueprintCallable, Category="Party Experiment|Control")
+    void ApplyPlayerJumpEnd(int32 PlayerIndex);
+
     /** 共享相机旋转接口；默认只有 PlayerController 的 Q/E 调用。 */
     UFUNCTION(BlueprintCallable, Category="Party Experiment|Camera")
     bool RequestSharedCameraTurn(int32 Direction);
@@ -84,13 +93,27 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Party Experiment|Camera")
     bool bAutoSpawnPartyCamera = true;
 
+    /**
+     * 双人模式使用的 ESC 菜单管理器。默认复用正式模式的简约暂停菜单；
+     * 可在双人 GameMode 蓝图中替换为它的蓝图子类。
+     */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Party Experiment|Pause Menu")
+    TSubclassOf<AGGJPauseMenuManager> PauseMenuManagerClass;
+
+    UFUNCTION(BlueprintPure, Category="Party Experiment|Pause Menu")
+    AGGJPauseMenuManager* GetPauseMenuManager() const { return PauseMenuManager; }
+
 private:
     void CreatePopulationGroups();
     void CreateAndActivateCamera();
+    void CreatePauseMenu();
 
     UPROPERTY(Transient)
     TArray<TObjectPtr<AGGJPartyPopulationGroup>> ActiveGroups;
 
     UPROPERTY(Transient)
     TObjectPtr<AGGJPartyCameraActor> PartyCamera;
+
+    UPROPERTY(Transient)
+    TObjectPtr<AGGJPauseMenuManager> PauseMenuManager;
 };
