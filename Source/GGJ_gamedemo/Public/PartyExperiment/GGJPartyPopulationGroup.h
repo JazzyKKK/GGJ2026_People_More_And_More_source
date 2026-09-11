@@ -79,6 +79,12 @@ public:
     /** PlayerController 每帧把一套键盘方向广播给该玩家的全部人物。 */
     void ApplySharedMovement(const FVector& WorldMovement);
 
+    /** 把一次跳跃按下广播给该玩家当前所有有效人物。 */
+    void ApplySharedJumpStart();
+
+    /** 把一次跳跃松开广播给该玩家当前所有有效人物。 */
+    void ApplySharedJumpEnd();
+
     UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="Party Experiment|Setup")
     int32 PlayerIndex = 0;
 

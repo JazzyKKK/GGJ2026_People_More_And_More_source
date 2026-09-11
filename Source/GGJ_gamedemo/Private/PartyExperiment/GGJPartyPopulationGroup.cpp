@@ -371,6 +371,30 @@ void AGGJPartyPopulationGroup::ApplySharedMovement(const FVector& WorldMovement)
     }
 }
 
+void AGGJPartyPopulationGroup::ApplySharedJumpStart()
+{
+    RemoveInvalidMembers();
+    for (const TWeakObjectPtr<AGGJPhysicalAnimationCharacter>& Member : Members)
+    {
+        if (AGGJPhysicalAnimationCharacter* Character = Member.Get())
+        {
+            Character->ApplySharedJumpStart();
+        }
+    }
+}
+
+void AGGJPartyPopulationGroup::ApplySharedJumpEnd()
+{
+    RemoveInvalidMembers();
+    for (const TWeakObjectPtr<AGGJPhysicalAnimationCharacter>& Member : Members)
+    {
+        if (AGGJPhysicalAnimationCharacter* Character = Member.Get())
+        {
+            Character->ApplySharedJumpEnd();
+        }
+    }
+}
+
 void AGGJPartyPopulationGroup::ApplyCharacterPushing()
 {
     if (!GetWorld())
