@@ -176,6 +176,20 @@ void AGGJFlowZone::ApplyFlowToCharacter(AGGJPhysicalAnimationCharacter* Characte
             SafeTargetSpeed - CurrentAlongFlow);
     }
 
+    // CharacterMovement 的 Walking/NavWalking 会把速度投影到地面，直接写入的 Z 分量
+    // 会在移动求解时被清掉。向上的三维风真正产生推力时，先让地面人物进入 Falling，
+    // 等它离开风区后 CharacterMovement 会按正常落地检测自动恢复 Walking。
+    const float LiftThreshold = FMath::Clamp(AutoLiftMinimumDirectionZ, 0.f, 1.f);
+    const bool bShouldLiftFromGround = bUseFull3DDirection
+        && bAutoLiftGroundedCharacters
+        && Direction.Z >= LiftThreshold
+        && VelocityChange > UE_KINDA_SMALL_NUMBER
+        && Movement->IsMovingOnGround();
+    if (bShouldLiftFromGround)
+    {
+        Movement->SetMovementMode(MOVE_Falling);
+    }
+
     Movement->Velocity += Direction * VelocityChange;
 
     // 仅改 Velocity 会被 PhysWalking 的地面摩擦在同一帧抵消。

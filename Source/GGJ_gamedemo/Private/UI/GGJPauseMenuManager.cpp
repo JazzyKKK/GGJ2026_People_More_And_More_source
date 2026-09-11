@@ -17,9 +17,11 @@ namespace GGJPauseMenu
 {
     constexpr TCHAR SettingsSection[] = TEXT("/Script/GGJ_gamedemo.GGJPauseMenuSettings");
     constexpr TCHAR VolumeKey[] = TEXT("MasterVolume");
-    // ESC 菜单中的“退出到主菜单”固定返回这个开始关卡。
+    // 蓝图清空目标属性时使用的安全回退路径。
     constexpr TCHAR StartLevelPackage[] = TEXT("/Game/GGJ/Level/start/Start");
-    // ESC 菜单中的“开发者关卡”固定进入物理角色测试关卡。
+    constexpr TCHAR Level1Package[] = TEXT("/Game/GGJ/Level/level1/Demonstration");
+    constexpr TCHAR Level2Package[] = TEXT("/Game/GGJ/Level/level2/Demonstration2");
+    constexpr TCHAR Level3Package[] = TEXT("/Game/GGJ/Level/level3/Demonstration3");
     constexpr TCHAR DeveloperLevelPackage[] =
         TEXT("/Game/GGJ/Character/Maps/L_PhysicalCharacterLab");
 }
@@ -28,6 +30,11 @@ AGGJPauseMenuManager::AGGJPauseMenuManager()
 {
     PrimaryActorTick.bCanEverTick = false;
     WidgetClass = UGGJPauseMenuWidget::StaticClass();
+    MainMenuLevel = TSoftObjectPtr<UWorld>(FSoftObjectPath(GGJPauseMenu::StartLevelPackage));
+    Level1Map = TSoftObjectPtr<UWorld>(FSoftObjectPath(GGJPauseMenu::Level1Package));
+    Level2Map = TSoftObjectPtr<UWorld>(FSoftObjectPath(GGJPauseMenu::Level2Package));
+    Level3Map = TSoftObjectPtr<UWorld>(FSoftObjectPath(GGJPauseMenu::Level3Package));
+    DeveloperMap = TSoftObjectPtr<UWorld>(FSoftObjectPath(GGJPauseMenu::DeveloperLevelPackage));
 }
 
 void AGGJPauseMenuManager::BeginPlay()
@@ -169,13 +176,85 @@ void AGGJPauseMenuManager::ReturnToMainMenu()
 {
     OnMainMenuRequested.Broadcast();
     UGameplayStatics::SetGamePaused(this, false);
-    UGameplayStatics::OpenLevel(this, FName(GGJPauseMenu::StartLevelPackage));
+    if (!MainMenuLevel.IsNull())
+    {
+        UGameplayStatics::OpenLevelBySoftObjectPtr(this, MainMenuLevel);
+    }
+    else
+    {
+        UGameplayStatics::OpenLevel(this, FName(GGJPauseMenu::StartLevelPackage));
+    }
 }
 
 void AGGJPauseMenuManager::OpenDeveloperLevel()
 {
+    OpenSelectedLevel(EGGJLevelDestination::Developer);
+}
+
+void AGGJPauseMenuManager::OpenSelectedLevel(const EGGJLevelDestination Destination)
+{
+    const TSoftObjectPtr<UWorld>* TargetLevel = nullptr;
+    const TCHAR* FallbackPackage = nullptr;
+    switch (Destination)
+    {
+    case EGGJLevelDestination::Level1:
+        TargetLevel = &Level1Map;
+        FallbackPackage = GGJPauseMenu::Level1Package;
+        break;
+    case EGGJLevelDestination::Level2:
+        TargetLevel = &Level2Map;
+        FallbackPackage = GGJPauseMenu::Level2Package;
+        break;
+    case EGGJLevelDestination::Level3:
+        TargetLevel = &Level3Map;
+        FallbackPackage = GGJPauseMenu::Level3Package;
+        break;
+    case EGGJLevelDestination::Developer:
+        TargetLevel = &DeveloperMap;
+        FallbackPackage = GGJPauseMenu::DeveloperLevelPackage;
+        break;
+    default:
+        break;
+    }
+
+    if (!TargetLevel || !FallbackPackage)
+    {
+        UE_LOG(LogTemp, Error,
+            TEXT("Pause menu cannot open unknown level destination %d."),
+            static_cast<int32>(Destination));
+        return;
+    }
+
+    // OpenLevel 前必须解除暂停，否则加载失败时当前世界会继续停在暂停状态。
+    bMenuOpen = false;
     UGameplayStatics::SetGamePaused(this, false);
-    UGameplayStatics::OpenLevel(this, FName(GGJPauseMenu::DeveloperLevelPackage));
+    if (!TargetLevel->IsNull())
+    {
+        UGameplayStatics::OpenLevelBySoftObjectPtr(this, *TargetLevel);
+    }
+    else
+    {
+        // 兼容在新增这些字段前就保存过 Class Defaults 的旧管理器蓝图。
+        UGameplayStatics::OpenLevel(this, FName(FallbackPackage));
+    }
+}
+
+UTexture2D* AGGJPauseMenuManager::GetLevelPreview(
+    const EGGJLevelDestination Destination) const
+{
+    switch (Destination)
+    {
+    case EGGJLevelDestination::Level1:
+        return Level1Preview;
+    case EGGJLevelDestination::Level2:
+        return Level2Preview;
+    case EGGJLevelDestination::Level3:
+        return Level3Preview;
+    case EGGJLevelDestination::Developer:
+        return DeveloperPreview;
+    default:
+        return nullptr;
+    }
 }
 
 void AGGJPauseMenuManager::QuitGame()
